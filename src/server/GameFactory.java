@@ -29,6 +29,13 @@ public class GameFactory {
 				g.configure(sc, new players.SimpleBot(), d, d2, 15, 15);
 				break;
 			}
+			default: {
+				Deck d2 = new Deck(dpr.parseFile("BotImbaDeck.xml"));
+				d2.shuffleCards();
+				g.configure(sc, new players.PassiveBot(), d, d2, 15, 15);
+				break;
+			}
+				
 		}
 		
 		return g;

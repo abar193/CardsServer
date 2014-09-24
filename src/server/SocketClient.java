@@ -103,7 +103,6 @@ public class SocketClient implements PlayerInterface, VisualSystemInterface {
 
 	@Override
 	public void reciveAction(String m) { // PI
-		System.out.println("recive action()");
 		JSONObject jobj = new JSONObject();
 		jobj.put("target", "player");
 		jobj.put("action", "reciveAction");
@@ -121,13 +120,12 @@ public class SocketClient implements PlayerInterface, VisualSystemInterface {
 	// PI
 	public void run() {
 		JSONObject jobj = new JSONObject();
-		System.out.println("Run()");
 		jobj.put("target", "player");
 		jobj.put("action", "run");
 		sock.sendText(JSONValue.toJSONString(jobj));
 		
 		try {
-			Thread.sleep(300000);
+			Thread.sleep(30000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

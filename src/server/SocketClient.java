@@ -20,6 +20,9 @@ public class SocketClient implements PlayerInterface, VisualSystemInterface {
 
 	private CardsSocket sock;
 	public int playerNumber;
+	public int selectedUnitSide, selectedUnitPosition;
+	
+	private FieldSituation latestSituation;
 	
 	public SocketClient(CardsSocket sock) {
 		this.sock = sock;
@@ -91,6 +94,7 @@ public class SocketClient implements PlayerInterface, VisualSystemInterface {
 	public void reciveInfo(PlayerData yourData, FieldSituation field,
 			PlayerOpenData enemyData) 
 	{
+		latestSituation = field;
 		this.playerNumber = yourData.playerNumber;
 		JSONObject jobj = new JSONObject();
 		jobj.put("target", "player");
@@ -125,17 +129,34 @@ public class SocketClient implements PlayerInterface, VisualSystemInterface {
 		sock.sendText(JSONValue.toJSONString(jobj));
 		
 		try {
-			Thread.sleep(30000);
+			while(true) {
+				Thread.sleep(100);
+			}
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+ 
 		}
 	}
 
+	
 	@Override
 	// PI
 	public Unit selectTarget() {
-		// TODO Auto-generated method stub
-		return null;
+		JSONObject jobj = new JSONObject();
+		jobj.put("target", "player");
+		jobj.put("action", "selectTarget");
+		sock.sendText(JSONValue.toJSONString(jobj));
+		
+		selectedUnitPosition = -2;
+		selectedUnitSide = -1;
+		
+		try {
+			while(selectedUnitPosition == -2) {
+				Thread.sleep(100);
+			}
+		} catch (InterruptedException e) {
+		}
+		
+		return latestSituation.unitForPlayer(selectedUnitPosition, selectedUnitSide);
 	}
 
 	@Override

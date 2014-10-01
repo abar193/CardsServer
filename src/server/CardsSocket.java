@@ -69,7 +69,10 @@ public class CardsSocket {
     			String ret = actionAnalyser(o); 
     			sendText(ret);
     			return;
-    		}
+    		} else if(o.containsKey("return")) {
+    			responseAnalyser(o); 
+    			return;
+    		} 
     	} catch(Exception e) {
     		e.printStackTrace();
     		sendText(ServerResponses.ResponseIllegal);
@@ -106,9 +109,31 @@ public class CardsSocket {
     }
     
     @SuppressWarnings("unchecked")
+	public void responseAnalyser(JSONObject o) {
+    	String target = (String)o.get("return");
+    	switch(target) {
+    		case "selectTarget":
+    			int pn, un;
+    			try {
+	    			pn = Integer.parseInt((String)o.get("side"));
+	    			un = Integer.parseInt((String)o.get("position"));
+    			} catch(Exception e) {
+    				e.printStackTrace();
+    				pn = -1;
+    				un = -1;
+    			}
+    			
+    			client.selectedUnitSide = pn;
+    			client.selectedUnitPosition = un;
+			default:
+				break;
+    	}
+    }
+    
+    @SuppressWarnings("unchecked")
 	public String actionAnalyser(JSONObject o) {
     	String action = (String)o.get("action");
-    	switch((String)o.get("action")) {
+    	switch(action) {
     		case "play":
     			if(clientDeck != null) {
     				logger.info("Game starting!");
@@ -139,8 +164,8 @@ public class CardsSocket {
     		}
     		
     		case "playCard": {
-    			BasicCard c;
-    			int pn;
+    			final BasicCard c;
+    			final int pn;
     			try {
 	    			c = new cards.CardJSONOperations().cardFromMap((Map<String, String>) o.get("card"));
 	    			pn = Integer.parseInt((String)o.get("player"));
@@ -150,8 +175,13 @@ public class CardsSocket {
     				e.printStackTrace();
     				return generateJSONResponse(action, ServerResponses.ResponseIllegal);
     			}
+    			new Thread(new Runnable() {
+					@Override
+					public void run() {
+						clientGame.playCard(c, pn);
+					}
+    			}).start();
     			
-    			clientGame.playCard(c, pn);
     			return generateJSONResponse(action, ServerResponses.ResponseOk);
     		}
     		
@@ -184,8 +214,22 @@ public class CardsSocket {
     			clientGame.commitAttack(ua, ut, p);
     			return generateJSONResponse(action, ServerResponses.ResponseOk);
     		}
+    		
+    		case "endTurn" : {
+    			int pn = -1;
+    			try {
+    				pn = Integer.parseInt((String)o.get("player"));
+    				if(pn != client.playerNumber)
+    					return generateJSONResponse(action, ServerResponses.ResponseIllegal);
+    			} catch(NumberFormatException e) {
+    				e.printStackTrace();
+    				return generateJSONResponse(action, ServerResponses.ResponseIllegal);
+    			}
+    			clientGame.endTurn(pn);
+    			return generateJSONResponse(action, ServerResponses.ResponseOk);
+    		}
 			default:
-				return generateJSONResponse(action, ServerResponses.ResponseIllegal);
+				return generateJSONResponse(action, ServerResponses.ResponseUnknownCommand);
     	}
     }
     
@@ -199,6 +243,7 @@ public class CardsSocket {
 					logger.info("Game.play()");
 					clientGame.play();
 				} catch (InterruptedException e) {
+					logger.info("CardsSocket.launchGame -> Game interrupted!");
 					e.printStackTrace();
 				}
 			}

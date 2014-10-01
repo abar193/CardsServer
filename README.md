@@ -8,7 +8,7 @@ Things done so far:
 
 * Servelet with deck information about presented decks (just to see, if everything is ok)
 
-* Socket class, capable of initialising single-payer server game. 
+* Socket class, capable of initialising and player single-payer game over internet with easy bot. 
 
 All client-server communication is done by sending JSON strings. https://code.google.com/p/json-simple/ libarary is used. 
 For each client request server should return response json object, with "response" key containing original client's request 
@@ -24,6 +24,9 @@ To use some of GameInterface methods client should send requests with encoded ke
 
 * For methods attackIsValid, canPlayCard server may return Game.network.ServerResponses.ResponseTrue/ResponseFalse/ResponseIllegal
 * For methods playCard, commitAttack(int, int, int) return values are either ResponseIllegal or ResponseOk.
+
+To respond for server's "selectTarget" request client should send JSON object with pair "return": "selectTarget", and two integer values for keys "side" and 
+"position" showing selected unit's side and position. For this input server generates no response other than sending new field situation. 
 
 As output send to client from Game.players.PlayerInterface, and Game.ui.VisualSystemInterface methods so far only reciveInfo, reciveAction, and run() are implemented, while run has no client-side-stop-signal, and lasts 30 seconds. 
 

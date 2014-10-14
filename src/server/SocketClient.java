@@ -129,7 +129,7 @@ public class SocketClient implements PlayerInterface, VisualSystemInterface {
 		sock.sendText(JSONValue.toJSONString(jobj));
 		
 		try {
-			while(true) {
+			while (true) {
 				Thread.sleep(100);
 			}
 		} catch (InterruptedException e) {

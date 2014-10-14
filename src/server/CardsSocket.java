@@ -1,6 +1,8 @@
 package server;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
@@ -8,8 +10,14 @@ import javax.websocket.*;
 import javax.websocket.CloseReason.CloseCodes;
 import javax.websocket.server.ServerEndpoint;
 
+import lobbies.GameFactory;
+import input.DeckInput;
+import input.ActionInput;
+import input.SocketInput;
+import input.ResponseInput;
+import input.SocketDecoder;
+
 import org.json.simple.*;
-import org.json.*;
 
 import cards.BasicCard;
 import cards.CardJSONOperations;
@@ -17,20 +25,24 @@ import cards.Deck;
 import network.ServerResponses;
 import src.Game;
 
-@ServerEndpoint(value = "/sock")
+@ServerEndpoint(
+    value = "/sock",
+    decoders = { SocketDecoder.class }
+)
 public class CardsSocket {
- 
-    private Logger logger = Logger.getLogger(this.getClass().getName());
+	
+    private Logger logger = Logger.getLogger("localhost/CardsSocket");
  
     private Deck clientDeck;
     private Game clientGame;
     private String playerOpponent;
-    private SocketClient client;
+    public SocketClient client;
     private Session session;
     
     @OnOpen
     public void onOpen(Session session) {
         logger.info("Connected... " + session.getId());
+        logger.info("Addressed: " + CardsServer.adressedCount);
         try {
 			session.getBasicRemote().sendText("Hi");
 			client = new SocketClient(this);
@@ -41,43 +53,28 @@ public class CardsSocket {
     }
     
     @OnMessage
-    public void onMessage(String message, Session session) {
-    	logger.info("Got message: " + message.substring(0, Math.max(10, message.length())));
-    	try {
-    		JSONObject o = (JSONObject) JSONValue.parse(message);
-    		if(o.containsKey("deck")) {
-    			clientDeck = new Deck();
-    			JSONArray jarr = (JSONArray) o.get("deck");
-    			playerOpponent = (String) o.get("opponent");
-    			java.util.Iterator<Map<String, String>> i = jarr.iterator();
-    			CardJSONOperations oper = new CardJSONOperations();
-    			while(i.hasNext()) {
-    				BasicCard c = oper.cardFromMap(i.next());
-    				if(c != null) {
-    					clientDeck.addCard(c);
-    				}
-    			}
-    			
-    			if(clientDeck.validateCards()) {
-    				sendText(generateJSONResponse("deck", ServerResponses.ResponseOk));
-    			} else {
-    				clientDeck = null;
-    				sendText(generateJSONResponse("deck", ServerResponses.ResponseFail));
-    			}
-    			return;
-    		} else if(o.containsKey("action")) {
-    			String ret = actionAnalyser(o); 
-    			sendText(ret);
-    			return;
-    		} else if(o.containsKey("return")) {
-    			responseAnalyser(o); 
-    			return;
-    		} 
-    	} catch(Exception e) {
-    		e.printStackTrace();
-    		sendText(ServerResponses.ResponseIllegal);
-    		return;
-    	}
+    public void onMessage(final SocketInput message, final Session session) {
+		if (message instanceof DeckInput) {
+			DeckInput di = (DeckInput)message;
+			
+   			if (di.getDeck().validateCards()) {
+   			    clientDeck = di.getDeck();
+   			    playerOpponent = di.getOpponent();
+				sendText(generateJSONResponse("deck", ServerResponses.ResponseOk));
+			} else {
+				clientDeck = null;
+				sendText(generateJSONResponse("deck", ServerResponses.
+				        ResponseFail));
+			}
+			return;
+		} else if (message instanceof ActionInput) {
+			String ret = actionAnalyser((ActionInput)message); 
+			sendText(ret);
+			return;
+		} else if (message instanceof ResponseInput) { 
+			responseAnalyser((ResponseInput) message); 
+			return;
+		} 
 
     	sendText("Unclear");
     }
@@ -87,20 +84,22 @@ public class CardsSocket {
         logger.info(String.format("Session %s closed because of %s", session.getId(), closeReason));
     }
     
-    public String generateJSONResponse(String toAction, String response) {
+    @SuppressWarnings("unchecked")
+	public String generateJSONResponse(String toAction, String response) {
     	JSONObject jobj = new JSONObject();
     	jobj.put("response", toAction);
     	jobj.put("status", response);
     	return JSONValue.toJSONString(jobj);
     }
     
-    public  void sendText(String message) {
+    public void sendText(String message) {
     	if(message == null) return;
     	synchronized (session) {
     	    if (session.isOpen()) {
     	        try { 
     	        	logger.info("Sending: " + message.substring(0, Math.min(message.length(), 15)));
 					session.getBasicRemote().sendText(message);
+					
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -109,72 +108,69 @@ public class CardsSocket {
     }
     
     @SuppressWarnings("unchecked")
-	public void responseAnalyser(JSONObject o) {
-    	String target = (String)o.get("return");
+	public void responseAnalyser(ResponseInput ri) {
+    	String target = ri.getTarget();
     	switch(target) {
     		case "selectTarget":
-    			int pn, un;
-    			try {
-	    			pn = Integer.parseInt((String)o.get("side"));
-	    			un = Integer.parseInt((String)o.get("position"));
-    			} catch(Exception e) {
-    				e.printStackTrace();
-    				pn = -1;
-    				un = -1;
-    			}
-    			
-    			client.selectedUnitSide = pn;
-    			client.selectedUnitPosition = un;
+    			client.selectedUnitSide = ri.getSide();
+    			client.selectedUnitPosition = ri.getPosition();
+    			return;
 			default:
 				break;
     	}
     }
     
     @SuppressWarnings("unchecked")
-	public String actionAnalyser(JSONObject o) {
-    	String action = (String)o.get("action");
+    /**
+     * Translates client action and passes it to game instance. 
+     * @param o client input
+     * @return answer string for client
+     */
+	public String actionAnalyser(final ActionInput ai) {
+    	String action = ai.getCommand();
     	switch(action) {
     		case "play":
-    			if(clientDeck != null) {
+    			if (clientDeck != null) {
     				logger.info("Game starting!");
-    				clientGame = GameFactory.instance().provideGame(clientDeck, client, playerOpponent);
-    				sendText(generateJSONResponse(action, ServerResponses.ResponseOk));
-    				launchGame();
+    				clientGame = GameFactory.instance().provideGame(clientDeck, client,
+    				        playerOpponent);
+    				if (clientGame != null) {
+    				    sendText(generateJSONResponse(action, ServerResponses.
+    				            ResponseOk));
+    				    launchGame();
+    				} else {
+    				    sendText(generateJSONResponse(action, ServerResponses.
+                                ResponseWait));
+    				}
+    				
     			} else {
     				logger.info("Client tried to play without a valid deck");
-    				sendText(generateJSONResponse(action, ServerResponses.ResponseIllegal));
+    				sendText(generateJSONResponse(action, ServerResponses.
+    				        ResponseIllegal));
     			}
     			return null;
     		case "canPlayCard": {
-    			BasicCard c;
-    			int pn;
-    			try {
-	    			c = new cards.CardJSONOperations().cardFromMap((Map<String, String>) o.get("card"));
-	    			pn = Integer.parseInt((String)o.get("player"));
-	    			if(c == null) throw new Exception("Wrong card");
-	    			if(pn != client.playerNumber) throw new Exception("Wrong player number");
-    			} catch(Exception e) {
-    				e.printStackTrace();
-    				logger.info(String.format("For card %s player %s was an exception", o.get("card"), 
-    						o.get("player")));
-    				return generateJSONResponse(action, ServerResponses.ResponseIllegal);
-    			}
-    			String resp = (clientGame.canPlayCard(c, pn)) ? ServerResponses.ResponseTrue : ServerResponses.ResponseFalse;
+    			final BasicCard c = ai.getCard();
+    			final int pn = ai.getPlayerNumber();
+    			
+    			if (c == null || pn != client.playerNumber) {
+    			    return generateJSONResponse(action, ServerResponses.
+                            ResponseIllegal);
+                }
+    			
+    			String resp = (clientGame.canPlayCard(c, pn)) 
+    			        ? ServerResponses.ResponseTrue : ServerResponses.ResponseFalse;
     			return generateJSONResponse(action, resp);
     		}
     		
     		case "playCard": {
-    			final BasicCard c;
-    			final int pn;
-    			try {
-	    			c = new cards.CardJSONOperations().cardFromMap((Map<String, String>) o.get("card"));
-	    			pn = Integer.parseInt((String)o.get("player"));
-	    			if(c == null) throw new Exception("Wrong card");
-	    			if(pn != client.playerNumber) throw new Exception("Wrong player number");
-    			} catch(Exception e) {
-    				e.printStackTrace();
-    				return generateJSONResponse(action, ServerResponses.ResponseIllegal);
-    			}
+    		    final BasicCard c = ai.getCard();
+                final int pn = ai.getPlayerNumber();
+                
+                if (c == null || pn != client.playerNumber) {
+                    return generateJSONResponse(action, ServerResponses.
+                            ResponseIllegal);
+                }
     			new Thread(new Runnable() {
 					@Override
 					public void run() {
@@ -186,55 +182,50 @@ public class CardsSocket {
     		}
     		
     		case "attackIsValid": {
-    			int ua, ut, p;
-    			try {
-    				ua = Integer.parseInt((String)o.get("attacker"));
-    				ut = Integer.parseInt((String)o.get("target"));
-	    			p  = Integer.parseInt((String)o.get("player"));
-	    			if(p != client.playerNumber) throw new Exception("Wrong input");
-    			} catch(Exception e) {
-    				e.printStackTrace();
-    				return generateJSONResponse(action, ServerResponses.ResponseIllegal);
-    			}
-    			String ret = (clientGame.attackIsValid(ua, ut, p)) ? ServerResponses.ResponseTrue : ServerResponses.ResponseFalse;
+    			final int ua = ai.getAttacker();
+    			final int ut = ai.getTarget();
+    			final int p = ai.getPlayerNumber();
+    			if (p != client.playerNumber) {
+    			    return generateJSONResponse(action, ServerResponses.
+                            ResponseIllegal);
+                }
+    			String ret = (clientGame.attackIsValid(ua, ut, p)) ? 
+    			        ServerResponses.ResponseTrue : ServerResponses.ResponseFalse;
     			return generateJSONResponse(action, ret); 
     		}
     		
     		case "commitAttack": {
-    			int ua, ut, p;
-    			try {
-    				ua = Integer.parseInt((String)o.get("attacker"));
-    				ut = Integer.parseInt((String)o.get("target"));
-	    			p  = Integer.parseInt((String)o.get("player"));
-	    			if(p != client.playerNumber) throw new Exception("Wrong input");
-    			} catch(Exception e) {
-    				e.printStackTrace();
-    				return generateJSONResponse(action, ServerResponses.ResponseIllegal);
-    			}
+    		    final int ua = ai.getAttacker();
+                final int ut = ai.getTarget();
+                final int p = ai.getPlayerNumber();
+                if (p != client.playerNumber) {
+                    return generateJSONResponse(action, ServerResponses.
+                            ResponseIllegal);
+                }
     			clientGame.commitAttack(ua, ut, p);
     			return generateJSONResponse(action, ServerResponses.ResponseOk);
     		}
     		
     		case "endTurn" : {
-    			int pn = -1;
-    			try {
-    				pn = Integer.parseInt((String)o.get("player"));
-    				if(pn != client.playerNumber)
-    					return generateJSONResponse(action, ServerResponses.ResponseIllegal);
-    			} catch(NumberFormatException e) {
-    				e.printStackTrace();
-    				return generateJSONResponse(action, ServerResponses.ResponseIllegal);
-    			}
-    			clientGame.endTurn(pn);
+    		    final int p = ai.getPlayerNumber();
+                if (p != client.playerNumber) {
+                    return generateJSONResponse(action, ServerResponses.
+                            ResponseIllegal);
+                }
+                
+    			clientGame.endTurn(p);
     			return generateJSONResponse(action, ServerResponses.ResponseOk);
     		}
 			default:
-				return generateJSONResponse(action, ServerResponses.ResponseUnknownCommand);
+				return generateJSONResponse(action, ServerResponses.
+				        ResponseUnknownCommand);
     	}
     }
     
+    /**
+     * Called in separate thread to launch the game
+     */
     public void launchGame() {
-    	
 		new Thread(new Runnable() {
 			@Override
 			public void run() {

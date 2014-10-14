@@ -136,7 +136,7 @@ public class SocketDecoder implements Decoder.Text<SocketInput> {
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
-                return new ActionInput(action);
+                return new ActionInput(action, pn);
             }
             default: {
                 return new ActionInput("unknown");

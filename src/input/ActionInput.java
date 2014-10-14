@@ -16,6 +16,12 @@ public class ActionInput implements SocketInput {
         this.command = command;
     }
     
+    /** One-command configuration with player number. */
+    public ActionInput(String command, int playerNumber) {
+        this.command = command;
+        this.playerNumber = playerNumber;
+    }
+    
     /** (Can)PlayCard configuration. */
     public ActionInput(String command, BasicCard c, int playerNumber) {
         this.command = command;

@@ -6,6 +6,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 
+import javax.ejb.EJB;
 import javax.websocket.*;
 import javax.websocket.CloseReason.CloseCodes;
 import javax.websocket.server.ServerEndpoint;
@@ -92,6 +93,11 @@ public class CardsSocket {
     	return JSONValue.toJSONString(jobj);
     }
     
+    @OnError
+    public void error(Session session, Throwable t) {
+        t.printStackTrace();    
+    }
+    
     public void sendText(String message) {
     	if(message == null) return;
     	synchronized (session) {
@@ -120,6 +126,9 @@ public class CardsSocket {
     	}
     }
     
+    @EJB
+    GameFactory fact;
+    
     @SuppressWarnings("unchecked")
     /**
      * Translates client action and passes it to game instance. 
@@ -132,7 +141,7 @@ public class CardsSocket {
     		case "play":
     			if (clientDeck != null) {
     				logger.info("Game starting!");
-    				clientGame = GameFactory.instance().provideGame(clientDeck, client,
+    				clientGame = fact.provideGame(clientDeck, client,
     				        playerOpponent);
     				if (clientGame != null) {
     				    sendText(generateJSONResponse(action, ServerResponses.

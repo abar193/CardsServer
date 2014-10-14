@@ -10,7 +10,7 @@ import javax.websocket.server.ServerEndpoint;
 
 import cards.BasicCard;
 
-@ServerEndpoint(value = "/cards")
+//@ServerEndpoint(value = "/cards")
 /**
  * Cards server, displays some game statistics.
  * @author Abar

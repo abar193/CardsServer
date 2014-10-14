@@ -2,6 +2,18 @@ package lobbies;
 
 import java.util.Vector;
 
+import java.util.Random;
+import java.util.logging.Logger;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.Timeout;
+import javax.ejb.TimerConfig;
+import javax.ejb.TimerService;
+
+
 import server.SocketClient;
 import src.Game;
 import cards.Deck;
@@ -11,6 +23,9 @@ import decks.DeckPackReader;
  * Creates and provides games for connected users.
  * @author Abar
  */
+
+@Startup
+@Singleton
 public class GameFactory {
 
     /**
@@ -25,7 +40,11 @@ public class GameFactory {
         public SocketClient client;
     }
     
-    /** Class constructor. */
+    @Resource TimerService tservice;
+    private Random random;
+    private Logger logger = Logger.getLogger("Factory");
+    private Vector<ClientConfiguration> lobbies;
+    
     public GameFactory() {    
     }
     
@@ -33,16 +52,16 @@ public class GameFactory {
     private static GameFactory instance = new GameFactory();
     
     /** Represents that one client, that hadn't found his pair yet. */
-    // TODO: rework it
     private ClientConfiguration seeker;
     
-    /** Naive solution for synchronizing problem. */
-    private Object synchronizer = new Object();
+    @PostConstruct
+    public void init() {
+        random = new Random();
+        tservice.createIntervalTimer(1000, 1000, new TimerConfig());
+    }
     
-    /** Singleton pattern.
-     * @return GameFactory */
-    public static GameFactory instance() {
-        return instance;
+    @Timeout
+    public void timeout() {
     }
     
     /**
@@ -52,7 +71,7 @@ public class GameFactory {
      * @param opponent 
      * @return Game instance
      */
-    public final Game provideGame(final Deck d, final SocketClient sc,
+    public synchronized final Game provideGame(final Deck d, final SocketClient sc,
             final String opponent) {
         DeckPackReader dpr = new DeckPackReader();
         d.shuffleCards();
@@ -66,15 +85,13 @@ public class GameFactory {
                 break;
             }
             case "Player": {
-                synchronized (synchronizer) {
-                    if (seeker == null) {
-                        seeker = new ClientConfiguration();
-                        seeker.deck = d;
-                        seeker.client = sc;
-                        return null;
-                    } else {
-                        
-                    }
+                if (seeker == null) {
+                    seeker = new ClientConfiguration();
+                    seeker.deck = d;
+                    seeker.client = sc;
+                    return null;
+                } else {
+                    
                 }
                 break;
             }
@@ -91,3 +108,6 @@ public class GameFactory {
     }
 
 }
+
+
+

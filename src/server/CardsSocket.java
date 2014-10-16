@@ -40,6 +40,9 @@ public class CardsSocket {
     public SocketClient client;
     private Session session;
     
+    @EJB
+    GameFactory fact;
+    
     @OnOpen
     public void onOpen(Session session) {
         logger.info("Connected... " + session.getId());
@@ -79,12 +82,12 @@ public class CardsSocket {
 
     	sendText("Unclear");
     }
- 
+
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
         logger.info(String.format("Session %s closed because of %s", session.getId(), closeReason));
     }
-    
+
     @SuppressWarnings("unchecked")
 	public String generateJSONResponse(String toAction, String response) {
     	JSONObject jobj = new JSONObject();
@@ -95,7 +98,7 @@ public class CardsSocket {
     
     @OnError
     public void error(Session session, Throwable t) {
-        t.printStackTrace();    
+        t.printStackTrace();
     }
     
     public void sendText(String message) {
@@ -105,7 +108,6 @@ public class CardsSocket {
     	        try { 
     	        	logger.info("Sending: " + message.substring(0, Math.min(message.length(), 15)));
 					session.getBasicRemote().sendText(message);
-					
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -113,7 +115,6 @@ public class CardsSocket {
     	}
     }
     
-    @SuppressWarnings("unchecked")
 	public void responseAnalyser(ResponseInput ri) {
     	String target = ri.getTarget();
     	switch(target) {
@@ -126,10 +127,6 @@ public class CardsSocket {
     	}
     }
     
-    @EJB
-    GameFactory fact;
-    
-    @SuppressWarnings("unchecked")
     /**
      * Translates client action and passes it to game instance. 
      * @param o client input
@@ -140,7 +137,6 @@ public class CardsSocket {
     	switch(action) {
     		case "play":
     			if (clientDeck != null) {
-    				logger.info("Game starting!");
     				clientGame = fact.provideGame(clientDeck, client,
     				        playerOpponent);
     				if (clientGame != null) {
@@ -231,6 +227,10 @@ public class CardsSocket {
     	}
     }
     
+	public void setGame(Game g) {
+	    clientGame = g;
+	}
+	
     /**
      * Called in separate thread to launch the game
      */

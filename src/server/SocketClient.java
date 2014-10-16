@@ -7,6 +7,7 @@ import players.PlayerData;
 import players.PlayerInterface;
 import players.PlayerOpenData;
 import src.FieldSituation;
+import src.Game;
 import src.GameInterface;
 import ui.InputInterface;
 import ui.VisualSystemInterface;
@@ -158,10 +159,20 @@ public class SocketClient implements PlayerInterface, VisualSystemInterface {
 		
 		return latestSituation.unitForPlayer(selectedUnitPosition, selectedUnitSide);
 	}
-
+	
 	@Override
 	public VisualSystemInterface visual() {
 		return this;
+	}
+	
+	/* Menu controller */
+	public void approveGame(Game g) {
+	    JSONObject jobj = new JSONObject();
+        jobj.put("target", "menu");
+        jobj.put("action", "play");
+        jobj.put("status", network.ServerResponses.ResponseOk);
+        sock.sendText(JSONValue.toJSONString(jobj));
+        sock.setGame(g);
 	}
 
 }

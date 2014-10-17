@@ -14,9 +14,6 @@ import javax.ejb.Timeout;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 
-
-
-
 import server.SocketClient;
 import src.Game;
 import cards.Deck;
@@ -51,7 +48,7 @@ public class GameFactory {
     @Resource TimerService tservice;
     private Random random;
     private Logger logger;
-    private static ArrayList<ClientConfiguration> seekers;
+    private static Vector<ClientConfiguration> seekers;
     
     @EJB
     GamesHolder holder;
@@ -63,7 +60,7 @@ public class GameFactory {
     public void init() {
         random = new Random();
         tservice.createIntervalTimer(1000, 1000, new TimerConfig());
-        seekers = new ArrayList<ClientConfiguration>(10);
+        seekers = new Vector<ClientConfiguration>(10);
         logger = Logger.getLogger("Factory");
         logger.log(java.util.logging.Level.FINE, "Factry init");
     }
@@ -71,21 +68,38 @@ public class GameFactory {
     @Timeout
     public void timeout() {
         if(seekers.size() >= 2) {
-            for(int i = 0; i < seekers.size() - 1; i++) {
-                int oppPos = i + 1;
-                ClientConfiguration opp = seekers.remove(oppPos);
-                ClientConfiguration cc = seekers.remove(i);
-                holder.launchGame(opp, cc);
+            for(int i = 0; i < seekers.size() - 1;) {
+                if(seekers.size() > i + 1) {
+                    int oppPos = i + 1;
+                    ClientConfiguration opp = seekers.remove(oppPos);
+                    ClientConfiguration cc = seekers.remove(i);
+                    holder.launchGame(opp, cc);
+                } else i++;
             }
         }
     }
     
     /**
-     * Provides game for player, or let's him wait.
+     * Removes client configuration with given SocketClient from search field.
+     * @param sc client to search for and to remove.
+     */
+    public boolean cancelSearchFor(SocketClient sc) {
+        for(int i = 0; i < seekers.size(); i++) {
+            if(seekers.get(i).client.equals(sc)) {
+                seekers.remove(i);
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Provides game for player, or lets him wait until partner is found.
      * @param d deck of player
      * @param sc 
      * @param opponent 
-     * @return Game instance
+     * @return Game instance, if game could be created instantly (vs bot), or null if client 
+     * should wait
      */
     public final Game provideGame(final Deck d, final SocketClient sc,
             final String opponent) {
@@ -104,7 +118,7 @@ public class GameFactory {
                 if(seekers == null) {
                     System.out.println("Creating seekers!");
                     logger.log(java.util.logging.Level.INFO, "Creating seekers!");
-                    seekers = new ArrayList<ClientConfiguration>(10);
+                    seekers = new Vector<ClientConfiguration>(10);
                 }
                 seekers.add(new ClientConfiguration(d, sc));
                 break;

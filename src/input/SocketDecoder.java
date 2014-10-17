@@ -64,7 +64,9 @@ public class SocketDecoder implements Decoder.Text<SocketInput> {
                 return actionAnalyser(o);
             } else if (o.containsKey("return")) { 
                 return responseAnalyser(o);
-            } 
+            } else if (o.containsKey("command")) {
+                return new TextCommandInput((String)o.get("command"));
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return null;

@@ -78,14 +78,18 @@ public class CardsSocket {
 		} else if (message instanceof ResponseInput) { 
 			responseAnalyser((ResponseInput) message); 
 			return;
-		} 
+		}  else if(message instanceof input.TextCommandInput) {
+		    commandAnalyser(message.getCommand());
+		    return;
+		}
 
     	sendText("Unclear");
     }
 
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
-        logger.info(String.format("Session %s closed because of %s", session.getId(), closeReason));
+        fact.cancelSearchFor(client);
+        logger.info(String.format("Session %s closed.", session.getId()));
     }
 
     @SuppressWarnings("unchecked")
@@ -98,7 +102,7 @@ public class CardsSocket {
     
     @OnError
     public void error(Session session, Throwable t) {
-        t.printStackTrace();
+        //t.printStackTrace();
     }
     
     public void sendText(String message) {
@@ -106,7 +110,7 @@ public class CardsSocket {
     	synchronized (session) {
     	    if (session.isOpen()) {
     	        try { 
-    	        	logger.info("Sending: " + message.substring(0, Math.min(message.length(), 15)));
+    	        	logger.info("Sending: " + message);
 					session.getBasicRemote().sendText(message);
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -127,6 +131,16 @@ public class CardsSocket {
     	}
     }
     
+	public void commandAnalyser(final String command) {
+	    if(command.equals("cancelSearchGame")) {
+	        if(fact.cancelSearchFor(this.client)) {
+	            sendText(generateJSONResponse("cancelSearchGame", ServerResponses.ResponseOk));
+	        } else {
+	            sendText(generateJSONResponse("cancelSearchGame", ServerResponses.ResponseFail));
+	        }
+	    }
+	}
+	
     /**
      * Translates client action and passes it to game instance. 
      * @param o client input

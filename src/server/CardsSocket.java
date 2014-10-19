@@ -39,6 +39,7 @@ public class CardsSocket {
     private String playerOpponent;
     public SocketClient client;
     private Session session;
+    private boolean closingConnection = false;
     
     @EJB
     GameFactory fact;
@@ -88,7 +89,11 @@ public class CardsSocket {
 
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
+        closingConnection = true;
         fact.cancelSearchFor(client);
+        if(clientGame != null && clientGame.gameStillRunning()) {
+            clientGame.playerQuits(client.playerNumber);
+        }
         logger.info(String.format("Session %s closed.", session.getId()));
     }
 
@@ -102,11 +107,12 @@ public class CardsSocket {
     
     @OnError
     public void error(Session session, Throwable t) {
-        if(!(t instanceof java.net.SocketException))
+        //if(!(t instanceof java.net.SocketException))
             t.printStackTrace();
     }
     
     public void sendText(String message) {
+        if(!session.isOpen() || closingConnection) return;
     	if(message == null) return;
     	synchronized (session) {
     	    if (session.isOpen()) {

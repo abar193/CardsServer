@@ -20,7 +20,7 @@ public class GamesHolder implements HolderInterface {
         
     }
     
-    private Logger logger = Logger.getLogger(this.getClass().getName());
+    private Logger logger = Logger.getLogger("localhost/GamesHolder");
     private Vector<Game>games = new Vector<Game>(100);
     private GameStat stat = new GameStat();
     
@@ -55,6 +55,7 @@ public class GamesHolder implements HolderInterface {
     }
 
     public void gameEnd(Game g, int winner) {
+        System.out.println("Game ended");
         int i = games.indexOf(g);
         if(i >= 0) {
             logger.log(Level.INFO, 

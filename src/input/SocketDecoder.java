@@ -140,6 +140,16 @@ public class SocketDecoder implements Decoder.Text<SocketInput> {
                 }
                 return new ActionInput(action, pn);
             }
+            
+            case "quitGame": {
+                int pn = -1;
+                try {
+                    pn = Integer.parseInt((String)o.get("player"));
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+                return new ActionInput(action, pn);
+            }
             default: {
                 return new ActionInput("unknown");
             }

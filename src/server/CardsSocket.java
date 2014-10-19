@@ -102,7 +102,8 @@ public class CardsSocket {
     
     @OnError
     public void error(Session session, Throwable t) {
-        //t.printStackTrace();
+        if(!(t instanceof java.net.SocketException))
+            t.printStackTrace();
     }
     
     public void sendText(String message) {
@@ -234,6 +235,17 @@ public class CardsSocket {
                 
     			clientGame.endTurn(p);
     			return generateJSONResponse(action, ServerResponses.ResponseOk);
+    		}
+    		
+    		case "quitGame": {
+    		    final int p = ai.getPlayerNumber();
+                if (p != client.playerNumber) {
+                    return generateJSONResponse(action, ServerResponses.
+                            ResponseIllegal);
+                }
+                
+                clientGame.playerQuits(p);
+                return generateJSONResponse(action, ServerResponses.ResponseOk);
     		}
 			default:
 				return generateJSONResponse(action, ServerResponses.

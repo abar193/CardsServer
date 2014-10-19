@@ -7,12 +7,14 @@ import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import javax.ejb.DependsOn;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.ejb.Timeout;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
+import javax.inject.Inject;
 
 import server.SocketClient;
 import src.Game;
@@ -26,6 +28,7 @@ import decks.DeckPackReader;
 
 @Startup
 @Singleton
+@DependsOn(value="GamesHolder")
 public class GameFactory {
 
     /**
@@ -51,7 +54,7 @@ public class GameFactory {
     private static Vector<ClientConfiguration> seekers;
     
     @EJB
-    GamesHolder holder;
+    HolderInterface gamesHolder;
     
     public GameFactory() {
     }
@@ -73,7 +76,7 @@ public class GameFactory {
                     int oppPos = i + 1;
                     ClientConfiguration opp = seekers.remove(oppPos);
                     ClientConfiguration cc = seekers.remove(i);
-                    holder.launchGame(opp, cc);
+                    gamesHolder.launchGame(opp, cc);
                 } else i++;
             }
         }

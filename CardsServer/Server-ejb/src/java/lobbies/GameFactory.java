@@ -16,20 +16,22 @@ import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
 import javax.inject.Inject;
 
-import server.SocketClient;
+//import server.SocketClient;
 import src.Game;
 import cards.Deck;
 import decks.DeckPackReader;
+import javax.ejb.Remote;
 
 /**
  * Creates and provides games for connected users.
  * @author Abar
  */
 
+@Remote
 @Startup
 @Singleton
 @DependsOn(value="GamesHolder")
-public class GameFactory {
+public class GameFactory implements FactoryInterface {
 
     /**
      * Contains client configuration, used to store user-information for
@@ -40,15 +42,15 @@ public class GameFactory {
         /** User's deck. */
         public Deck deck;
         /** User's client. */
-        public SocketClient client;
+        public SocketClientInterface client;
         
-        public ClientConfiguration(Deck d, SocketClient sc) {
+        public ClientConfiguration(Deck d, SocketClientInterface sc) {
             this.deck = d;
             this.client = sc;
         }
     }
     
-    @Resource TimerService tservice;
+    //@Resource TimerService tservice;
     private Random random;
     private Logger logger;
     private static Vector<ClientConfiguration> seekers;
@@ -62,13 +64,13 @@ public class GameFactory {
     @PostConstruct
     public void init() {
         random = new Random();
-        tservice.createIntervalTimer(1000, 1000, new TimerConfig());
+        //tservice.createIntervalTimer(1000, 1000, new TimerConfig());
         seekers = new Vector<ClientConfiguration>(10);
         logger = Logger.getLogger("Factory");
         logger.log(java.util.logging.Level.FINE, "Factry init");
     }
     
-    @Timeout
+    //@Timeout
     public void timeout() {
         if(seekers.size() >= 2) {
             for(int i = 0; i < seekers.size() - 1;) {
@@ -86,7 +88,7 @@ public class GameFactory {
      * Removes client configuration with given SocketClient from search field.
      * @param sc client to search for and to remove.
      */
-    public boolean cancelSearchFor(SocketClient sc) {
+    public boolean cancelSearchFor(SocketClientInterface sc) {
         for(int i = 0; i < seekers.size(); i++) {
             if(seekers.get(i).client.equals(sc)) {
                 seekers.remove(i);
@@ -104,7 +106,7 @@ public class GameFactory {
      * @return Game instance, if game could be created instantly (vs bot), or null if client 
      * should wait
      */
-    public final Game provideGame(final Deck d, final SocketClient sc,
+    public final Game provideGame(final Deck d, final SocketClientInterface sc,
             final String opponent) {
         DeckPackReader dpr = new DeckPackReader();
         d.shuffleCards();

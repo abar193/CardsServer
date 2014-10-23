@@ -68,6 +68,10 @@ public class GamesHolder implements HolderInterface {
             
     }
     
+    public int players() {
+        return games.size() * 2;
+    }
+    
     private class GameStat implements GameStatReceiver {
 
         @Override

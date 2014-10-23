@@ -3,6 +3,7 @@ package server;
 import java.util.ArrayList;
 
 import cards.SpellCard;
+import lobbies.SocketClientInterface;
 import players.PlayerData;
 import players.PlayerInterface;
 import players.PlayerOpenData;
@@ -17,7 +18,7 @@ import units.Unit;
 import org.json.simple.*;
 import org.json.*;
 
-public class SocketClient implements PlayerInterface, VisualSystemInterface {
+public class SocketClient implements PlayerInterface, VisualSystemInterface, SocketClientInterface {
 
 	private CardsSocket sock;
 	public int playerNumber;
@@ -108,11 +109,11 @@ public class SocketClient implements PlayerInterface, VisualSystemInterface {
 
 	@Override
 	public void reciveAction(String m) { // PI
-		JSONObject jobj = new JSONObject();
-		jobj.put("target", "player");
-		jobj.put("action", "reciveAction");
-		jobj.put("message", m);
-		sock.sendText(JSONValue.toJSONString(jobj));
+        JSONObject jobj = new JSONObject();
+        jobj.put("target", "player");
+        jobj.put("action", "reciveAction");
+        jobj.put("message", m);
+        sock.sendText(JSONValue.toJSONString(jobj));
 	}
 
 	@Override
@@ -124,40 +125,40 @@ public class SocketClient implements PlayerInterface, VisualSystemInterface {
 	@Override
 	// PI
 	public void run() {
-		JSONObject jobj = new JSONObject();
-		jobj.put("target", "player");
-		jobj.put("action", "run");
-		sock.sendText(JSONValue.toJSONString(jobj));
-		
-		try {
-			while (true) {
-				Thread.sleep(100);
-			}
-		} catch (InterruptedException e) {
- 
-		}
+            JSONObject jobj = new JSONObject();
+            jobj.put("target", "player");
+            jobj.put("action", "run");
+            sock.sendText(JSONValue.toJSONString(jobj));
+
+            try {
+                while (true) {
+                        Thread.sleep(100);
+                }
+            } catch (InterruptedException e) {
+
+            }
 	}
 
 	
 	@Override
 	// PI
 	public Unit selectTarget() {
-		JSONObject jobj = new JSONObject();
-		jobj.put("target", "player");
-		jobj.put("action", "selectTarget");
-		sock.sendText(JSONValue.toJSONString(jobj));
-		
-		selectedUnitPosition = -2;
-		selectedUnitSide = -1;
-		
-		try {
-			while(selectedUnitPosition == -2) {
-				Thread.sleep(100);
-			}
-		} catch (InterruptedException e) {
-		}
-		
-		return latestSituation.unitForPlayer(selectedUnitPosition, selectedUnitSide);
+        JSONObject jobj = new JSONObject();
+        jobj.put("target", "player");
+        jobj.put("action", "selectTarget");
+        sock.sendText(JSONValue.toJSONString(jobj));
+
+        selectedUnitPosition = -2;
+        selectedUnitSide = -1;
+
+        try {
+            while(selectedUnitPosition == -2) {
+                    Thread.sleep(100);
+            }
+        } catch (InterruptedException e) {
+        }
+
+        return latestSituation.unitForPlayer(selectedUnitPosition, selectedUnitSide);
 	}
 	
 	@Override

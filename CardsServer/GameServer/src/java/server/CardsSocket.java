@@ -23,11 +23,12 @@ import org.json.simple.*;
 import cards.BasicCard;
 import cards.CardJSONOperations;
 import cards.Deck;
+import lobbies.FactoryInterface;
 import network.ServerResponses;
 import src.Game;
 
 @ServerEndpoint(
-    value = "/sock",
+    value = "/sock",    
     decoders = { SocketDecoder.class }
 )
 public class CardsSocket {
@@ -40,14 +41,13 @@ public class CardsSocket {
     public SocketClient client;
     private Session session;
     private boolean closingConnection = false;
-    
+        
     @EJB
-    GameFactory fact;
+    FactoryInterface fact;
     
     @OnOpen
     public void onOpen(Session session) {
         logger.info("Connected... " + session.getId());
-        logger.info("Addressed: " + CardsServer.adressedCount);
         try {
 			session.getBasicRemote().sendText("Hi");
 			client = new SocketClient(this);
@@ -90,7 +90,7 @@ public class CardsSocket {
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
         closingConnection = true;
-        fact.cancelSearchFor(client);
+        boolean cancelSearchFor = fact.cancelSearchFor(client);
         if(clientGame != null && clientGame.gameStillRunning()) {
             clientGame.playerQuits(client.playerNumber);
         }
@@ -158,6 +158,8 @@ public class CardsSocket {
     	switch(action) {
     		case "play":
     			if (clientDeck != null) {
+                    System.out.println("Cd " + (clientDeck == null) + " cl " + (client == null) +
+                        " po " + (playerOpponent == null));
     				clientGame = fact.provideGame(clientDeck, client,
     				        playerOpponent);
     				if (clientGame != null) {

@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import javax.annotation.Resource;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.websocket.server.ServerEndpoint;
 
 import cards.BasicCard;
 
-//@ServerEndpoint(value = "/cards")
+@ServerEndpoint(value = "/cards")
 /**
  * Cards server, displays some game statistics.
  * @author Abar
@@ -20,8 +21,8 @@ public class CardsServer extends HttpServlet {
     /** svUID. */
     private static final long serialVersionUID = -3751044935112459000L;
     
-    /** Names of usefull decks. */
-    private final String[] names = {"Neutrals", "Machines"};
+    /** Names of useful decks. */
+    private final String[] names = {"Neutrals", "Machines", "Aliens"};
     
     /** List of all presented decks. */
     private static ArrayList<ArrayList<BasicCard>> allDecks;
@@ -30,7 +31,7 @@ public class CardsServer extends HttpServlet {
     private final int version = 10;
     
     /** Test value. */
-    //Resource(name="java:comp/AdressedCount")
+    @Resource(name="java:comp/AdressedCount")
     public static int adressedCount = 0;
     
     public void init() throws ServletException

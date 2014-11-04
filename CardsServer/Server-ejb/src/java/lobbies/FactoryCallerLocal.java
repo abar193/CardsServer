@@ -14,7 +14,7 @@ import src.Game;
  * @author Abar
  */
 @Local
-public interface FactoryInterface {
+public interface FactoryCallerLocal {
     public Game provideGame(final Deck d, final SocketClientInterface sc, final String opponent);
-    public boolean cancelSearchFor(SocketClientInterface sc);
+    public boolean cancelSearchFor(SocketClientInterface sc);   
 }

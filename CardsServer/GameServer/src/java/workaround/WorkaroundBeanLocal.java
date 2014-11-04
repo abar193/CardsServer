@@ -3,10 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package lobbies;
+package workaround;
 
 import cards.Deck;
 import javax.ejb.Local;
+import lobbies.SocketClientInterface;
 import src.Game;
 
 /**
@@ -14,7 +15,7 @@ import src.Game;
  * @author Abar
  */
 @Local
-public interface FactoryInterface {
+public interface WorkaroundBeanLocal {
     public Game provideGame(final Deck d, final SocketClientInterface sc, final String opponent);
-    public boolean cancelSearchFor(SocketClientInterface sc);
+    public boolean cancelSearchFor(SocketClientInterface sc);   
 }

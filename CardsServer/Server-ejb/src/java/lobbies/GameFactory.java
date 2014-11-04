@@ -20,17 +20,12 @@ import javax.inject.Inject;
 import src.Game;
 import cards.Deck;
 import decks.DeckPackReader;
-import javax.ejb.Remote;
 
 /**
  * Creates and provides games for connected users.
  * @author Abar
  */
-
-@Remote
-@Startup
 @Singleton
-@DependsOn(value="GamesHolder")
 public class GameFactory implements FactoryInterface {
 
     /**
@@ -50,8 +45,6 @@ public class GameFactory implements FactoryInterface {
         }
     }
     
-    //@Resource TimerService tservice;
-    private Random random;
     private Logger logger;
     private static Vector<ClientConfiguration> seekers;
     
@@ -63,23 +56,33 @@ public class GameFactory implements FactoryInterface {
     
     @PostConstruct
     public void init() {
-        random = new Random();
-        //tservice.createIntervalTimer(1000, 1000, new TimerConfig());
         seekers = new Vector<ClientConfiguration>(10);
         logger = Logger.getLogger("Factory");
-        logger.log(java.util.logging.Level.FINE, "Factry init");
+        logger.log(java.util.logging.Level.INFO, "Factry init");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                timeout();
+            }
+        }, "Match Finder").start();
     }
     
-    //@Timeout
     public void timeout() {
-        if(seekers.size() >= 2) {
-            for(int i = 0; i < seekers.size() - 1;) {
-                if(seekers.size() > i + 1) {
-                    int oppPos = i + 1;
-                    ClientConfiguration opp = seekers.remove(oppPos);
-                    ClientConfiguration cc = seekers.remove(i);
-                    gamesHolder.launchGame(opp, cc);
-                } else i++;
+        while(true) {
+            if(seekers.size() >= 2) {
+                for(int i = 0; i < seekers.size() - 1;) {
+                    if(seekers.size() > i + 1) {
+                        int oppPos = i + 1;
+                        ClientConfiguration opp = seekers.remove(oppPos);
+                        ClientConfiguration cc = seekers.remove(i);
+                        gamesHolder.launchGame(opp, cc);
+                    } else i++;
+                }
+            }
+            try { 
+                Thread.sleep(1000);
+            } catch(InterruptedException e) {
+                return;
             }
         }
     }

@@ -11,7 +11,7 @@ import javax.websocket.*;
 import javax.websocket.CloseReason.CloseCodes;
 import javax.websocket.server.ServerEndpoint;
 
-import lobbies.GameFactory;
+import lobbies.FactoryInterface;
 import input.DeckInput;
 import input.ActionInput;
 import input.SocketInput;
@@ -23,7 +23,8 @@ import org.json.simple.*;
 import cards.BasicCard;
 import cards.CardJSONOperations;
 import cards.Deck;
-import lobbies.FactoryInterface;
+import java.util.logging.Level;
+import javax.inject.Inject;
 import network.ServerResponses;
 import src.Game;
 
@@ -43,11 +44,12 @@ public class CardsSocket {
     private boolean closingConnection = false;
         
     @EJB
-    FactoryInterface fact;
+    workaround.WorkaroundBeanLocal fact;
     
     @OnOpen
     public void onOpen(Session session) {
         logger.info("Connected... " + session.getId());
+        if(fact == null) logger.log(Level.WARNING, "No factory!");
         try {
 			session.getBasicRemote().sendText("Hi");
 			client = new SocketClient(this);
@@ -155,6 +157,7 @@ public class CardsSocket {
      */
 	public String actionAnalyser(final ActionInput ai) {
     	String action = ai.getCommand();
+        
     	switch(action) {
     		case "play":
     			if (clientDeck != null) {

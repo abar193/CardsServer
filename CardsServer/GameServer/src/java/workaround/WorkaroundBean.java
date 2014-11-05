@@ -3,7 +3,6 @@ package workaround;
 import cards.Deck;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import lobbies.FactoryCallerLocal;
 import lobbies.FactoryInterface;
 import lobbies.SocketClientInterface;
 import src.Game;
@@ -27,5 +26,4 @@ public class WorkaroundBean implements WorkaroundBeanLocal {
     public boolean cancelSearchFor(SocketClientInterface sc) {
         return factory.cancelSearchFor(sc);
     }
-    
 }

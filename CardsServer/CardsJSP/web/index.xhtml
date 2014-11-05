@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    
+    <h:head>
+        <title>Abar's Cards</title>
+        <link rel="stylesheet" type="text/css" href="GameCSS.css"></link>
+    </h:head>
+    <h:body>
+        <h:panelGrid class="content" columns="2">
+            <h:panelGroup class="left">
+                <h2>Welcome to the home of Abar's Cards game</h2>
+                The game is in it's early stages. Nothing is final, not even this
+                text. 
+                <p>Some day I will write news here. For now there are none.</p>
+            </h:panelGroup>
+            <h:panelGrid class="right">
+                <h2>Server statistics:</h2>
+                <p>Active games: #{infoProvider.activeGames}</p>
+                <p>Players In queue: #{infoProvider.activeSearches}</p>
+            </h:panelGrid>
+        </h:panelGrid>
+    </h:body>
+</html>
+

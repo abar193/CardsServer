@@ -5,6 +5,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.Resource;
+import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -19,6 +20,9 @@ public class GamesHolder implements HolderInterface {
     public GamesHolder() {
         
     }
+    
+    @EJB 
+    StatCollectorLocal collector;
     
     private Logger logger = Logger.getLogger("localhost/GamesHolder");
     private Vector<Game>games = new Vector<Game>(100);
@@ -48,6 +52,7 @@ public class GamesHolder implements HolderInterface {
     private void laterLaunch(Game g) {
         try {
             Thread.sleep(1000);
+            collector.setActiveGames(collector.getActiveGames() + 1);
             g.play();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -57,6 +62,7 @@ public class GamesHolder implements HolderInterface {
     public void gameEnd(Game g, int winner) {
         System.out.println("Game ended");
         int i = games.indexOf(g);
+        collector.setActiveGames(collector.getActiveGames() - 1);
         if(i >= 0) {
             logger.log(Level.INFO, 
                     String.format("Game %d ended with victory of %d player.", i, winner));

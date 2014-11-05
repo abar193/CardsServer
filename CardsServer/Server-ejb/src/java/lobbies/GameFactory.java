@@ -50,6 +50,8 @@ public class GameFactory implements FactoryInterface {
     
     @EJB
     HolderInterface gamesHolder;
+    @EJB 
+    StatCollectorLocal collector;
     
     public GameFactory() {
     }
@@ -75,6 +77,7 @@ public class GameFactory implements FactoryInterface {
                         int oppPos = i + 1;
                         ClientConfiguration opp = seekers.remove(oppPos);
                         ClientConfiguration cc = seekers.remove(i);
+                        collector.setActiveSearchers(collector.getActiveSearchers() - 2);
                         gamesHolder.launchGame(opp, cc);
                     } else i++;
                 }
@@ -95,6 +98,7 @@ public class GameFactory implements FactoryInterface {
         for(int i = 0; i < seekers.size(); i++) {
             if(seekers.get(i).client.equals(sc)) {
                 seekers.remove(i);
+                collector.setActiveSearchers(collector.getActiveSearchers() - 1);
                 return true;
             }
         }
@@ -123,11 +127,8 @@ public class GameFactory implements FactoryInterface {
                 return g;
             }
             case "Player": {
-                if(seekers == null) {
-                    System.out.println("Creating seekers!");
-                    logger.log(java.util.logging.Level.INFO, "Creating seekers!");
-                    seekers = new Vector<ClientConfiguration>(10);
-                }
+                collector.setActiveSearchers(collector.getActiveSearchers() + 1);
+                logger.info("Searchers set to " + collector.getActiveSearchers());
                 seekers.add(new ClientConfiguration(d, sc));
                 break;
             }

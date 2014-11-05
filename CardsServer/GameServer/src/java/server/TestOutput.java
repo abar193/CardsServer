@@ -15,7 +15,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import lobbies.FactoryCallerLocal;
+import lobbies.FactoryInterface;
 
 /**
  *
@@ -24,8 +24,8 @@ import lobbies.FactoryCallerLocal;
 @WebServlet(name = "test", urlPatterns = {"/test"})
 public class TestOutput extends HttpServlet {
 
-    @EJB(lookup = "java:global/CardsServer/Server-ejb/FactoryCaller!lobbies.FactoryCallerLocal")
-    FactoryCallerLocal factory;
+    @EJB
+    FactoryInterface factory;
     @EJB 
     workaround.WorkaroundBeanLocal bean;
     
@@ -51,7 +51,6 @@ public class TestOutput extends HttpServlet {
             out.println("<h1>Servlet TestOutput at " + request.getContextPath() + "</h1>");
             out.format("<p>EJB is %s\n", (factory == null) ? "null" : "not null!");
             out.format("<p>Workaround is %s\n", (bean == null) ? "null" : "not null!");
-            out.println("1");
             out.println("</body>");
             out.println("</html>");
         }

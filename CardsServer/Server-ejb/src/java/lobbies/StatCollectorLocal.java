@@ -5,16 +5,20 @@
  */
 package lobbies;
 
-import cards.Deck;
 import javax.ejb.Local;
-import src.Game;
 
 /**
  *
  * @author Abar
  */
 @Local
-public interface FactoryCallerLocal {
-    public Game provideGame(final Deck d, final SocketClientInterface sc, final String opponent);
-    public boolean cancelSearchFor(SocketClientInterface sc);   
+public interface StatCollectorLocal {
+
+    void incClicker();
+    int getClicks();
+    public int getActiveGames();
+    public void setActiveGames(int activeGames);
+    public int getActiveSearchers();
+    public void setActiveSearchers(int activeSearchers);
+    
 }

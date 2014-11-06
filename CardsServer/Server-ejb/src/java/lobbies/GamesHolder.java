@@ -48,6 +48,24 @@ public class GamesHolder implements HolderInterface {
         }).start();
     }
     
+    public void launchDevGame(ClientConfiguration p1, ClientConfiguration p2) {
+        //if(games == null) games = new Vector<Game>(100);
+        final Game g = new Game();
+        g.configure(p1.client, p2.client, p1.deck, p2.deck, 15, 15);
+        g.setDevGame();
+        g.addDevCards();
+        games.add(g);
+        g.statReceiver = stat;
+        p1.client.approveGame(g);
+        p2.client.approveGame(g);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                laterLaunch(g);
+            }
+        }).start();
+    }
+    
     // I'm really considering moving from TomEE to GlassFish.
     private void laterLaunch(Game g) {
         try {

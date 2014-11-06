@@ -38,10 +38,16 @@ public class GameFactory implements FactoryInterface {
         public Deck deck;
         /** User's client. */
         public SocketClientInterface client;
+        public boolean debugGame = false;
         
         public ClientConfiguration(Deck d, SocketClientInterface sc) {
             this.deck = d;
             this.client = sc;
+        }
+        public ClientConfiguration(Deck d, SocketClientInterface sc, boolean debug) {
+            this.deck = d;
+            this.client = sc;
+            this.debugGame = debug;
         }
     }
     
@@ -74,12 +80,25 @@ public class GameFactory implements FactoryInterface {
             if(seekers.size() >= 2) {
                 for(int i = 0; i < seekers.size() - 1;) {
                     if(seekers.size() > i + 1) {
-                        int oppPos = i + 1;
-                        ClientConfiguration opp = seekers.remove(oppPos);
-                        ClientConfiguration cc = seekers.remove(i);
-                        collector.setActiveSearchers(collector.getActiveSearchers() - 2);
-                        gamesHolder.launchGame(opp, cc);
-                    } else i++;
+                        int oppPos = -1;
+                        boolean b = seekers.get(i).debugGame;
+                        for(int j = i + 1; j < seekers.size(); j++) {
+                            if(seekers.get(j).debugGame == b) {
+                                oppPos = j;
+                                break;
+                            }
+                        }
+                        if(oppPos != -1) {
+                            ClientConfiguration opp = seekers.remove(oppPos);
+                            ClientConfiguration cc = seekers.remove(i);
+                            collector.setActiveSearchers(collector.getActiveSearchers() - 2);
+                            if(!b)
+                                gamesHolder.launchGame(opp, cc);
+                            else 
+                                gamesHolder.launchDevGame(opp, cc);
+                        }
+                    } 
+                    i++;
                 }
             }
             try { 
@@ -97,8 +116,8 @@ public class GameFactory implements FactoryInterface {
     public boolean cancelSearchFor(SocketClientInterface sc) {
         for(int i = 0; i < seekers.size(); i++) {
             if(seekers.get(i).client.equals(sc)) {
-                seekers.remove(i);
                 collector.setActiveSearchers(collector.getActiveSearchers() - 1);
+                seekers.remove(i);
                 return true;
             }
         }
@@ -130,6 +149,11 @@ public class GameFactory implements FactoryInterface {
                 collector.setActiveSearchers(collector.getActiveSearchers() + 1);
                 logger.info("Searchers set to " + collector.getActiveSearchers());
                 seekers.add(new ClientConfiguration(d, sc));
+                break;
+            }
+            case "Dev:Player": {
+                collector.setActiveSearchers(collector.getActiveSearchers() + 1);
+                seekers.add(new ClientConfiguration(d, sc, true));
                 break;
             }
             default: {

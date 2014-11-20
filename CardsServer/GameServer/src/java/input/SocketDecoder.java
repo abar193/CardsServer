@@ -115,6 +115,21 @@ public class SocketDecoder implements Decoder.Text<SocketInput> {
                 return new ActionInput(action, c, pn);
             }
             
+            case "canUseBuilding":
+            case "useBuildingCard": {
+                int bn = -1;
+                int pn = -1;
+                try {
+                    bn = Integer.parseInt((String)o.get("building"));
+                    pn = Integer.parseInt((String)o.get("player"));
+                    
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return new ActionInput(action, 0, bn, pn);
+            }
+                
+            
             case "attackIsValid":
             case "commitAttack": {
                 int ua = -2, ut = -2, p = -1;

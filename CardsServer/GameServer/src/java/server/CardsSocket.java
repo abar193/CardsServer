@@ -180,6 +180,35 @@ public class CardsSocket {
     				        ResponseIllegal));
     			}
     			return null;
+                
+            case "canUseBuilding": {
+                if (ai.getPlayerNumber() != client.playerNumber) {
+    			    return generateJSONResponse(action, ServerResponses.
+                            ResponseIllegal);
+                }
+                String resp = (clientGame.canUseBuilding(ai.getTarget(), ai.getPlayerNumber())) 
+    			        ? ServerResponses.ResponseTrue : ServerResponses.ResponseFalse;
+    			return generateJSONResponse(action, resp);
+            }
+            
+            case "useBuildingCard": {
+    		    final int t = ai.getTarget();
+                final int pn = ai.getPlayerNumber();
+                
+                if (pn != client.playerNumber) {
+                    return generateJSONResponse(action, ServerResponses.
+                            ResponseIllegal);
+                }
+    			new Thread(new Runnable() {
+					@Override
+					public void run() {
+						clientGame.useBuildingCard(t, pn);
+					}
+    			}).start();
+    			
+    			return generateJSONResponse(action, ServerResponses.ResponseOk);
+    		}
+            
     		case "canPlayCard": {
     			final BasicCard c = ai.getCard();
     			final int pn = ai.getPlayerNumber();

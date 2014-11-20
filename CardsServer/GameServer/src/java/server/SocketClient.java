@@ -17,6 +17,7 @@ import units.Unit;
 
 import org.json.simple.*;
 import org.json.*;
+import units.FieldObject;
 
 public class SocketClient implements PlayerInterface, VisualSystemInterface, SocketClientInterface {
 
@@ -142,7 +143,7 @@ public class SocketClient implements PlayerInterface, VisualSystemInterface, Soc
 	
 	@Override
 	// PI
-	public Unit selectTarget() {
+	public FieldObject selectTarget() {
         JSONObject jobj = new JSONObject();
         jobj.put("target", "player");
         jobj.put("action", "selectTarget");
@@ -158,7 +159,7 @@ public class SocketClient implements PlayerInterface, VisualSystemInterface, Soc
         } catch (InterruptedException e) {
         }
 
-        return latestSituation.unitForPlayer(selectedUnitPosition, selectedUnitSide);
+        return latestSituation.objectForPlayer(selectedUnitPosition, selectedUnitSide);
 	}
 	
 	@Override

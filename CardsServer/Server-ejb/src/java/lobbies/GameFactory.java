@@ -19,7 +19,7 @@ import javax.inject.Inject;
 //import server.SocketClient;
 import src.Game;
 import cards.Deck;
-import decks.DeckPackReader;
+import decks.DOMDeckReader;
 
 /**
  * Creates and provides games for connected users.
@@ -134,7 +134,7 @@ public class GameFactory implements FactoryInterface {
      */
     public final Game provideGame(final Deck d, final SocketClientInterface sc,
             final String opponent) {
-        DeckPackReader dpr = new DeckPackReader();
+        DOMDeckReader dpr = new DOMDeckReader();
         d.shuffleCards();
 
         switch (opponent) {
